@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Card {
+  cardId String  @id
+  userId String? @db.Uuid
+  user   User?   @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model ParkingSlot {
+  slotId Int        @id @db.SmallInt
+  state  SlotStatus @default(UNOCCUPIED)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model User {
+  userId        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String    @unique(map: "username_unique") @db.VarChar(255)
+  fingerprint   String?
+  role          UserRole  @default(CUSTOMER)
+  password      String?
+  refreshTokens String[]  @default([])
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)
+  Card          Card[]
+  vehicles       Vehicle[]
+}
+
+model Vehicle {
+  vehicleId    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  licensePlate String @db.VarChar(255)
+  userId       String @db.Uuid
+  User         User   @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum SlotStatus {
+  OCCUPIED
+  UNOCCUPIED
+}
+
+enum UserRole {
+  CUSTOMER
+  STAFF
+}

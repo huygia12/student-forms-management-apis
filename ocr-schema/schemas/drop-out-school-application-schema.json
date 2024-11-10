@@ -1,0 +1,338 @@
+[
+  {
+    "name": "STUDENT_NAME",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          575,
+          1033,
+          941,
+          81
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_PHONE_NUMBER",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          1843,
+          1029,
+          538,
+          90
+        ]
+      }
+    ]
+  },
+  {
+    "name": "MAJOR",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          521,
+          1111,
+          531,
+          90
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_CLASS",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          1180,
+          1115,
+          346,
+          90
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_ID",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          1842,
+          1116,
+          535,
+          90
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_BIRTH_DATE",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          863,
+          1194,
+          650,
+          90
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_GENDER",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          1756,
+          1201,
+          358,
+          83
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_CITIZEN_IDENTIFICATION",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          591,
+          1281,
+          813,
+          83
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_CITIZEN_IDENTIFICATION_VALID_DATE",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          1758,
+          1277,
+          613,
+          83
+        ]
+      }
+    ]
+  },
+  {
+    "name": "STUDENT_CITIZEN_IDENTIFICATION_ISSUED_LOCATION",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          544,
+          1359,
+          1905,
+          79
+        ]
+      }
+    ]
+  },
+  {
+    "name": "PERMANENT_RESIDENT",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          802,
+          1439,
+          1639,
+          79
+        ]
+      }
+    ]
+  },
+  {
+    "name": "PARENT_NAME",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          671,
+          1524,
+          846,
+          80
+        ]
+      }
+    ]
+  },
+  {
+    "name": "PARENT_PHONE_NUMMBER",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          1703,
+          1522,
+          642,
+          80
+        ]
+      }
+    ]
+  },
+  {
+    "name": "CURRENT_RESIDENT",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          691,
+          1604,
+          1745,
+          80
+        ]
+      }
+    ]
+  },
+  {
+    "name": "DROP_OFF_DATE",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          1584,
+          1685,
+          757,
+          80
+        ]
+      }
+    ]
+  },
+  {
+    "name": "DROP_OFF_REASON",
+    "type": "OCR_WORD",
+    "page_number": "1",
+    "data_type": "STRING",
+    "correction": {
+      "type": "NONE",
+      "details": ""
+    },
+    "regions": [
+      {
+        "index": 0,
+        "region": [
+          695,
+          1785,
+          1644,
+          80
+        ]
+      }
+    ]
+  }
+]

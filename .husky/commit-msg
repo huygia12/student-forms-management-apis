@@ -1,0 +1,6 @@
+#!/bin/sh
+commit_message="$1"
+
+# exit with a non-zero exit code in case of an invalid commit message
+
+npx commitlint --edit "$commit_message"
