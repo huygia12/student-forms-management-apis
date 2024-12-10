@@ -132,3 +132,4 @@ dist
 #ocr debugging
 ocr-schema/debug/
 ocr-schema/ocr-output/
+ocr-schema/temp/

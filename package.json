@@ -17,7 +17,6 @@
         "dev": "nodemon",
         "lint": "eslint ./src --config eslint.config.mjs",
         "prettier": "prettier --write .",
-        "ocr": "apt install tesseract-ocr",
         "db-pull": "prisma db pull --schema src/prisma/schema.prisma",
         "db-generate": "prisma generate --schema ./src/prisma/schema.prisma",
         "db-validate": "prisma validate --schema ./src/prisma/schema.prisma",
@@ -25,8 +24,7 @@
     },
     "keywords": [
         "student-form-management",
-        "express",
-        "tesseract-ocr"
+        "express"
     ],
     "author": "huygia12",
     "license": "MIT",
@@ -86,7 +84,7 @@
         "typescript": "^5.5.4"
     },
     "overrides": {
-        "uri-js": "npm:uri-js-replace"
+        "ajv": "^8.17.1"
     },
     "lint-staged": {
         "*.{css,html,js,json,md,yml,yaml}": "prettier --write",
