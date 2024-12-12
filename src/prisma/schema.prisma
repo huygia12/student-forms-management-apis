@@ -12,8 +12,7 @@ model Admin {
   password      String
   avatar        String?        @default("default-avatar.jpg")
   username      String         @db.VarChar(255)
-  phoneNumber   String?
-  birthdate     DateTime?      @db.Timestamptz(6)
+  email         String         @unique(map: "email_unique")
   refreshTokens String[]       @default([])
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
   deletedAt     DateTime?      @db.Timestamptz(6)
@@ -62,6 +61,7 @@ model Student {
   refreshTokens String[]       @default([])
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
   deletedAt     DateTime?      @db.Timestamptz(6)
+  studentCode   String         @unique(map: "studentcode_unique")
   PersonalForm  PersonalForm[]
 }
 

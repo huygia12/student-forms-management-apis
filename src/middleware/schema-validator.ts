@@ -60,7 +60,7 @@ const expressSchemaValidator = (
         }
 
         // validation successful
-        console.debug(`[schema validator] succeed}`);
+        console.debug(`[schema validator] succeed`);
         return next();
     };
 };

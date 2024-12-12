@@ -1,11 +1,30 @@
-import type {UserRole} from "@prisma/client";
+import {Gender} from "@prisma/client";
 
-export interface UserDTO {
-    userId: string;
+export enum UserRole {
+    ADMIN = "ADMIN",
+    STUDENT = "STUDENT",
+}
+
+export interface StudentDTO {
+    studentId: string;
+    studentCode: string;
+    avatar: string | null;
     username: string;
-    role: UserRole;
-    fingerprint: string | null;
+    major: string;
+    phoneNumber: string | null;
+    gender: Gender;
+    birthdate: Date;
     createdAt: Date;
+    deletedAt: Date | null;
+}
+
+export interface AdminDTO {
+    adminId: string;
+    avatar: string | null;
+    username: string;
+    email: string;
+    createdAt: Date;
+    deletedAt: Date | null;
 }
 
 export interface UserInToken {

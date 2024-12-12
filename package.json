@@ -5,7 +5,7 @@
     "main": "src/index.ts",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/huygia12/student-forms-management-apis"
+        "url": "git+https://github.com/huygia12/students-forms-management-apis"
     },
     "_moduleAliasess": {
         "@": "dist"

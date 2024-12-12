@@ -1,144 +1,200 @@
 import {compareSync, hashSync} from "bcrypt";
-import {UserLogin, UserSignup, UserUpdate} from "@/common/schemas";
-import {UserRole, type User} from "@prisma/client";
+import {
+    AdminSignup,
+    AdminLogin,
+    AdminUpdate,
+    StudentSignup,
+    StudentLogin,
+    StudentUpdate,
+} from "@/common/schemas";
 import prisma from "@/common/prisma-client";
-import {UserDTO, UserInToken} from "@/common/types";
+import {AdminDTO, StudentDTO, UserInToken, UserRole} from "@/common/types";
 import UserAlreadyExistError from "@/errors/user/user-already-exist";
 import {AuthToken, ResponseMessage} from "@/common/constants";
 import UserNotFoundError from "@/errors/user/user-not-found";
 import WrongPasswordError from "@/errors/user/wrong-password";
 import jwtService from "./jwt-service";
-import UserAlreadyLoginError from "@/errors/user/user-already-login";
-import MissingTokenError from "@/errors/auth/missing-token";
-import {TokenExpiredError} from "jsonwebtoken";
 import InvalidTokenError from "@/errors/auth/invalid-token";
-import UserCannotBeDeleted from "@/errors/user/user-cannot-be-deleted";
+import {Admin, Student} from "@prisma/client";
 
 const saltOfRound = 10;
 
-const getUserDTOs = async (params: {role?: UserRole}): Promise<UserDTO[]> => {
-    const users = await prisma.user.findMany({
+//admins
+const updateAdmin = async (
+    adminId: string,
+    validPayload: AdminUpdate
+): Promise<void> => {
+    if (validPayload.email) {
+        const duplicatedAdminAccount = await getAdminByEmail(
+            validPayload.email
+        );
+
+        if (
+            duplicatedAdminAccount &&
+            duplicatedAdminAccount.adminId !== adminId
+        )
+            throw new UserAlreadyExistError(
+                ResponseMessage.USER_ALREADY_EXISTS
+            );
+    }
+
+    await prisma.admin.update({
         where: {
-            role: params.role,
+            adminId: adminId,
         },
-        select: {
-            userId: true,
-            username: true,
-            role: true,
-            fingerprint: true,
-            createdAt: true,
-            vehicles: true,
+        data: validPayload,
+    });
+};
+
+const logoutAsAdmin = async (token: string, userId: string) => {
+    await deleteAdminRefreshToken(token, userId);
+};
+
+const clearAdminRefreshTokens = async (adminId: string) => {
+    await prisma.admin.update({
+        where: {adminId: adminId},
+        data: {
+            refreshTokens: [],
+        },
+    });
+};
+
+const deleteAdminRefreshToken = async (
+    refreshToken: string,
+    adminId: string
+) => {
+    const newRefreshTokens: string[] = await prisma.admin
+        .findFirst({where: {adminId: adminId}})
+        .then((user) => {
+            if (!user) {
+                throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
+            }
+            return user.refreshTokens.filter((token) => token !== refreshToken);
+        });
+
+    await prisma.admin.update({
+        where: {
+            adminId: adminId,
+        },
+        data: {
+            refreshTokens: newRefreshTokens,
+        },
+    });
+};
+
+const checkIfAdminRefreshTokenExistInDB = async (
+    refreshToken: string,
+    adminId: string
+): Promise<boolean> => {
+    const counter = await prisma.admin.count({
+        where: {
+            adminId: adminId,
+            deletedAt: null,
+            refreshTokens: {has: refreshToken},
         },
     });
 
-    return users;
+    return counter > 0;
 };
 
-const getUserByUsername = async (username: string): Promise<User | null> => {
-    const user = await prisma.user.findFirst({
+const pushAdminRefreshToken = async (refreshToken: string, adminId: string) => {
+    await prisma.admin.update({
         where: {
-            username: username,
+            adminId: adminId,
+        },
+        data: {
+            refreshTokens: {
+                push: refreshToken,
+            },
+        },
+    });
+};
+
+const getAdminByEmail = async (email: string): Promise<Admin | null> => {
+    const user = await prisma.admin.findFirst({
+        where: {
+            email: email,
         },
     });
 
     return user;
 };
 
-const getValidUserDTO = async (
-    username: string,
-    password: string
-): Promise<UserDTO> => {
-    const findByUsername = await getUserByUsername(username);
+const getAdminDTO = async (adminId: string): Promise<AdminDTO | null> => {
+    const admin = await prisma.admin.findUnique({
+        where: {
+            adminId: adminId,
+        },
+        select: {
+            adminId: true,
+            avatar: true,
+            email: true,
+            username: true,
+            createdAt: true,
+            deletedAt: true,
+        },
+    });
 
-    if (!findByUsername)
+    return admin;
+};
+
+const getValidAdmin = async (
+    email: string,
+    password: string
+): Promise<Admin> => {
+    const findByEmail = await getAdminByEmail(email);
+
+    if (!findByEmail)
         throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
 
     // Check whether password is valid
-    const match =
-        findByUsername.password &&
-        compareSync(password, findByUsername.password);
+    const match = compareSync(password, findByEmail.password);
     if (!match) throw new WrongPasswordError(ResponseMessage.WRONG_PASSWORD);
 
-    return {
-        userId: findByUsername.userId,
-        username: findByUsername.username,
-        role: findByUsername.role,
-        createdAt: findByUsername.createdAt,
-        fingerprint: findByUsername.fingerprint,
-    };
+    return findByEmail;
 };
 
-const getUserDTO = async (userId: string): Promise<UserDTO | null> => {
-    const user = await prisma.user.findUnique({
-        where: {
-            userId: userId,
-        },
-        select: {
-            userId: true,
-            username: true,
-            role: true,
-            createdAt: true,
-            fingerprint: true,
-            vehicles: true,
+const insertAdmin = async (validPayload: AdminSignup): Promise<void> => {
+    const duplicatedAdminAccount = await getAdminByEmail(validPayload.email);
+
+    if (duplicatedAdminAccount)
+        throw new UserAlreadyExistError(ResponseMessage.USER_ALREADY_EXISTS);
+
+    await prisma.admin.create({
+        data: {
+            username: validPayload.username,
+            password: hashSync(validPayload.password, saltOfRound),
+            email: validPayload.email,
+            avatar: validPayload.avatar,
         },
     });
-
-    return user;
 };
 
-const login = async (
-    prevAT: string | undefined,
+const loginAsAdmin = async (
     prevRT: string | undefined,
-    validPayload: UserLogin
+    validPayload: AdminLogin
 ): Promise<{refreshToken: string; accessToken: string}> => {
-    //If both token are verified and refresh token is stored in DB, then will not create new token
     try {
-        if (typeof prevAT !== "string")
-            throw new MissingTokenError(ResponseMessage.TOKEN_MISSING);
-        // Get userId from accesstoken payload
-        const userDecoded = jwtService.verifyAuthToken(
-            prevAT.replace("Bearer ", ""),
-            AuthToken.AC
-        ) as UserInToken;
+        if (typeof prevRT == "string") {
+            // Get userId from refreshtoken payload
+            const userDecoded = jwtService.decodeToken(prevRT) as UserInToken;
 
-        const tokenExisting: boolean =
-            prevRT !== undefined &&
-            (await checkIfRefreshTokenExistInDB(prevRT, userDecoded.userId));
-
-        // If refresh token already existed in DB
-        if (tokenExisting) {
-            try {
-                jwtService.verifyAuthToken(prevRT!, AuthToken.RF);
-            } catch (error: any) {
-                // If DB had that refreshToken which has been expired already so must delete that
-                if (error instanceof TokenExpiredError) {
-                    await deleteRefreshToken(prevRT!, userDecoded.userId);
-
-                    // and keep processing the login
-                    throw {};
-                }
-            }
-            // User already been login
-            throw new UserAlreadyLoginError("");
+            // If refresh token already existed in DB so delete it
+            await deleteAdminRefreshToken(prevRT, userDecoded.userId);
         }
     } catch (error: any) {
-        if (error instanceof UserAlreadyLoginError) {
-            // Go in here if user already been login
-            throw new UserAlreadyLoginError(ResponseMessage.USER_ALREADY_LOGIN);
-        }
-
-        console.debug(`[user service]: login : error=${JSON.stringify(error)}`);
+        console.debug(`[user service]: login : ${JSON.stringify(error)}`);
     }
 
-    const validUser: UserDTO = await getValidUserDTO(
-        validPayload.username,
+    const validAdmin: Admin = await getValidAdmin(
+        validPayload.email,
         validPayload.password
     );
 
     const payload: UserInToken = {
-        userId: validUser.userId,
-        username: validUser.username,
-        role: validUser.role,
+        userId: validAdmin.adminId,
+        username: validAdmin.username,
+        role: UserRole.ADMIN,
     };
 
     //create AT, RT
@@ -156,15 +212,11 @@ const login = async (
         throw new Error(ResponseMessage.GENERATE_TOKEN_ERROR);
 
     //Push refresh token to DB
-    await pushRefreshToken(refreshToken, validUser.userId);
+    await pushAdminRefreshToken(refreshToken, validAdmin.adminId);
     return {refreshToken, accessToken};
 };
 
-const logout = async (token: string, userId: string) => {
-    await deleteRefreshToken(token, userId);
-};
-
-const refreshToken = async (
+const refreshAdminToken = async (
     prevRT: string
 ): Promise<{accessToken: string; refreshToken: string}> => {
     try {
@@ -174,7 +226,7 @@ const refreshToken = async (
         ) as UserInToken;
 
         //Hacker's request: must clear all refresh token to login again
-        const existing: boolean = await checkIfRefreshTokenExistInDB(
+        const existing: boolean = await checkIfAdminRefreshTokenExistInDB(
             prevRT,
             userDecoded.userId
         );
@@ -183,21 +235,21 @@ const refreshToken = async (
             console.debug(
                 `[user service]: refresh token: unknown refresh token`
             );
-            await clearUserRefreshTokens(userDecoded.userId);
+            await clearAdminRefreshTokens(userDecoded.userId);
             throw new InvalidTokenError(ResponseMessage.TOKEN_INVALID);
         }
 
         //Down here token must be valid
-        const userDTO = await getUserDTO(userDecoded.userId);
+        const adminDTO = await getAdminDTO(userDecoded.userId);
 
-        if (!userDTO)
+        if (!adminDTO)
             throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
 
-        await deleteRefreshToken(prevRT, userDecoded.userId);
+        await deleteAdminRefreshToken(prevRT, userDecoded.userId);
         const payload: UserInToken = {
-            userId: userDTO.userId,
-            username: userDTO.username,
-            role: userDTO.role,
+            userId: adminDTO.adminId,
+            username: adminDTO.username,
+            role: UserRole.ADMIN,
         };
 
         //create AT, RT
@@ -215,96 +267,122 @@ const refreshToken = async (
             throw new Error(ResponseMessage.GENERATE_TOKEN_ERROR);
 
         //Push refresh token to DB
-        await pushRefreshToken(refreshToken, userDTO.userId);
+        await pushAdminRefreshToken(refreshToken, adminDTO.adminId);
         return {accessToken, refreshToken};
     } catch {
         throw new InvalidTokenError(ResponseMessage.TOKEN_INVALID);
     }
 };
 
-const insertUser = async (validPayload: UserSignup): Promise<UserDTO> => {
-    const userHolder = await getUserByUsername(validPayload.username);
+const deleteAdmin = async (adminId: string) => {
+    const admin = await getAdminDTO(adminId);
 
-    if (userHolder)
-        throw new UserAlreadyExistError(ResponseMessage.USER_ALREADY_EXISTS);
+    if (!admin) throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
 
-    const user = await prisma.user.create({
-        data: {
-            username: validPayload.username,
-            password: validPayload.password
-                ? hashSync(validPayload.password, saltOfRound)
-                : null,
+    await prisma.admin.update({
+        where: {
+            adminId: adminId,
         },
-        select: {
-            userId: true,
-            username: true,
-            role: true,
-            createdAt: true,
-            fingerprint: true,
+        data: {
+            deletedAt: new Date(),
         },
     });
-    return user;
 };
 
-const updateUser = async (
-    userId: string,
-    validPayload: UserUpdate
-): Promise<UserDTO> => {
-    if (validPayload.username) {
-        const userHolder: User | null = await getUserByUsername(
-            validPayload.username
+//students
+const checkIfStudentRefreshTokenExistInDB = async (
+    refreshToken: string,
+    adminId: string
+): Promise<boolean> => {
+    const counter = await prisma.student.count({
+        where: {
+            studentId: adminId,
+            deletedAt: null,
+            refreshTokens: {has: refreshToken},
+        },
+    });
+
+    return counter > 0;
+};
+
+const clearStudentRefreshTokens = async (studentId: string) => {
+    await prisma.student.update({
+        where: {studentId: studentId},
+        data: {
+            refreshTokens: [],
+        },
+    });
+};
+
+const refreshStudentToken = async (
+    prevRT: string
+): Promise<{accessToken: string; refreshToken: string}> => {
+    try {
+        const userDecoded = jwtService.verifyAuthToken(
+            prevRT,
+            AuthToken.RF
+        ) as UserInToken;
+
+        //Hacker's request: must clear all refresh token to login again
+        const existing: boolean = await checkIfStudentRefreshTokenExistInDB(
+            prevRT,
+            userDecoded.userId
         );
 
-        if (userHolder && userHolder.userId !== userId)
-            throw new UserAlreadyExistError(
-                ResponseMessage.USER_ALREADY_EXISTS
+        if (!existing) {
+            console.debug(
+                `[user service]: refresh token: unknown refresh token`
             );
+            await clearStudentRefreshTokens(userDecoded.userId);
+            throw new InvalidTokenError(ResponseMessage.TOKEN_INVALID);
+        }
+
+        //Down here token must be valid
+        const userDTO = await getStudentDTO(userDecoded.userId);
+
+        if (!userDTO)
+            throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
+
+        await deleteStudentRefreshToken(prevRT, userDecoded.userId);
+        const payload: UserInToken = {
+            userId: userDTO.studentId,
+            username: userDTO.username,
+            role: UserRole.STUDENT,
+        };
+
+        //create AT, RT
+        const accessToken: string | null = jwtService.generateAuthToken(
+            payload,
+            AuthToken.AC
+        );
+
+        const refreshToken: string | null = jwtService.generateAuthToken(
+            payload,
+            AuthToken.RF
+        );
+
+        if (!accessToken || !refreshToken)
+            throw new Error(ResponseMessage.GENERATE_TOKEN_ERROR);
+
+        //Push refresh token to DB
+        await pushStudentRefreshToken(refreshToken, userDTO.studentId);
+        return {accessToken, refreshToken};
+    } catch {
+        throw new InvalidTokenError(ResponseMessage.TOKEN_INVALID);
     }
-
-    const user = await prisma.user.update({
-        where: {
-            userId: userId,
-        },
-        data: {
-            username: validPayload.username,
-            fingerprint: validPayload.fingerprint,
-        },
-        select: {
-            userId: true,
-            username: true,
-            role: true,
-            fingerprint: true,
-            createdAt: true,
-        },
-    });
-
-    return user;
 };
 
-const deleteRefreshToken = async (refreshToken: string, userId: string) => {
-    const newRefreshTokens: string[] = await prisma.user
-        .findFirst({where: {userId: userId}})
-        .then((user) => {
-            if (!user) {
-                throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
-            }
-            return user.refreshTokens.filter((token) => token !== refreshToken);
-        });
-
-    await prisma.user.update({
-        where: {
-            userId: userId,
-        },
-        data: {
-            refreshTokens: newRefreshTokens,
-        },
-    });
+const logoutAsStudent = async (token: string, studentId: string) => {
+    await deleteStudentRefreshToken(token, studentId);
 };
 
-const pushRefreshToken = async (refreshToken: string, userId: string) => {
-    await prisma.user.update({
+const pushStudentRefreshToken = async (
+    refreshToken: string,
+    studentId: string
+) => {
+    await prisma.student.update({
         where: {
-            userId: userId,
+            studentId: studentId,
         },
         data: {
             refreshTokens: {
@@ -314,53 +392,251 @@ const pushRefreshToken = async (refreshToken: string, userId: string) => {
     });
 };
 
-const clearUserRefreshTokens = async (userId: string) => {
-    await prisma.user.update({
-        where: {userId: userId},
-        data: {
-            refreshTokens: [],
-        },
-    });
-};
-
-const deleteUser = async (userId: string) => {
-    const user = await getUserDTO(userId);
-
-    if (!user) throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
-
-    if (user.role === UserRole.STAFF)
-        throw new UserCannotBeDeleted(ResponseMessage.ADMIN_CANNOT_BE_DELETED);
-
-    await prisma.user.delete({
-        where: {
-            userId: userId,
-        },
-    });
-};
-
-const checkIfRefreshTokenExistInDB = async (
+const deleteStudentRefreshToken = async (
     refreshToken: string,
-    userId: string
-): Promise<boolean> => {
-    await getUserDTO(userId);
+    studentId: string
+) => {
+    const newRefreshTokens: string[] = await prisma.student
+        .findFirst({where: {studentId: studentId}})
+        .then((user) => {
+            if (!user) {
+                throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
+            }
+            return user.refreshTokens.filter((token) => token !== refreshToken);
+        });
 
-    const user: User | null = await prisma.user.findFirst({
+    await prisma.student.update({
         where: {
-            userId: userId,
-            refreshTokens: {has: refreshToken},
+            studentId: studentId,
+        },
+        data: {
+            refreshTokens: newRefreshTokens,
+        },
+    });
+};
+
+const getStudentDTO = async (studentId: string): Promise<StudentDTO | null> => {
+    const student = await prisma.student.findUnique({
+        where: {
+            studentId: studentId,
+        },
+        select: {
+            studentId: true,
+            studentCode: true,
+            avatar: true,
+            username: true,
+            major: true,
+            phoneNumber: true,
+            gender: true,
+            birthdate: true,
+            createdAt: true,
+            deletedAt: true,
         },
     });
 
-    return user !== null;
+    return student;
+};
+
+const getDuplicateStudentCode = async (
+    studentCodes: string[]
+): Promise<string[]> => {
+    const studentIds = await prisma.student
+        .findMany({
+            where: {
+                studentCode: {
+                    in: studentCodes,
+                },
+            },
+        })
+        .then((data) => data.map((e) => e.studentCode));
+
+    return studentIds;
+};
+
+const insertStudents = async (validPayload: StudentSignup): Promise<void> => {
+    const duplicatedStudentCodes = await getDuplicateStudentCode(
+        validPayload.map((e) => e.studentCode)
+    );
+
+    if (duplicatedStudentCodes.length > 0)
+        throw new UserAlreadyExistError(
+            `Duplicated student code found: [${duplicatedStudentCodes.join(", ")}]`
+        );
+
+    const data = validPayload.map((e) => {
+        return {
+            ...e,
+            birthdate: new Date(e.birthdate),
+            password: hashSync(e.password, saltOfRound),
+        };
+    });
+
+    await prisma.student.createMany({data: data});
+};
+
+const getStudentDTOs = async (
+    limit: number = 10,
+    deletedInclude: boolean = false,
+    currentPage: number = 1
+): Promise<StudentDTO[]> => {
+    const students = await prisma.student.findMany({
+        where: {
+            deletedAt: deletedInclude ? undefined : null,
+        },
+        select: {
+            studentId: true,
+            studentCode: true,
+            avatar: true,
+            username: true,
+            major: true,
+            phoneNumber: true,
+            gender: true,
+            birthdate: true,
+            createdAt: true,
+            deletedAt: true,
+        },
+        skip: (currentPage - 1) * limit,
+        take: limit,
+    });
+
+    return students;
+};
+
+const getStudentByStudentCode = async (
+    studentCode: string
+): Promise<Student | null> => {
+    const student = await prisma.student.findFirst({
+        where: {
+            studentCode: studentCode,
+        },
+    });
+
+    return student;
+};
+
+const getValidStudent = async (
+    email: string,
+    password: string
+): Promise<Student> => {
+    const findByStudentCode = await getStudentByStudentCode(email);
+
+    if (!findByStudentCode)
+        throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
+
+    // Check whether password is valid
+    const match = compareSync(password, findByStudentCode.password);
+    if (!match) throw new WrongPasswordError(ResponseMessage.WRONG_PASSWORD);
+
+    return findByStudentCode;
+};
+
+const loginAsStudent = async (
+    prevRT: string | undefined,
+    validPayload: StudentLogin
+): Promise<{refreshToken: string; accessToken: string}> => {
+    try {
+        if (typeof prevRT == "string") {
+            // Get userId from refreshtoken payload
+            const userDecoded = jwtService.decodeToken(prevRT) as UserInToken;
+
+            // If refresh token already existed in DB so delete it
+            await deleteStudentRefreshToken(prevRT, userDecoded.userId);
+        }
+    } catch (error: any) {
+        console.debug(`[user service]: login : ${JSON.stringify(error)}`);
+    }
+
+    const validStudent: Student = await getValidStudent(
+        validPayload.studentCode,
+        validPayload.password
+    );
+
+    const payload: UserInToken = {
+        userId: validStudent.studentId,
+        username: validStudent.username,
+        role: UserRole.STUDENT,
+    };
+
+    //create AT, RT
+    const accessToken: string | null = jwtService.generateAuthToken(
+        payload,
+        AuthToken.AC
+    );
+
+    const refreshToken: string | null = jwtService.generateAuthToken(
+        payload,
+        AuthToken.RF
+    );
+
+    if (!accessToken || !refreshToken)
+        throw new Error(ResponseMessage.GENERATE_TOKEN_ERROR);
+
+    //Push refresh token to DB
+    await pushStudentRefreshToken(refreshToken, validStudent.studentId);
+    return {refreshToken, accessToken};
+};
+
+const deleteStudent = async (studentId: string) => {
+    const student = await getStudentDTO(studentId);
+
+    if (!student) throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
+
+    await prisma.student.update({
+        where: {
+            studentId: studentId,
+        },
+        data: {
+            deletedAt: new Date(),
+        },
+    });
+};
+
+const updateStudent = async (
+    studentId: string,
+    validPayload: StudentUpdate
+): Promise<void> => {
+    if (validPayload.studentCode) {
+        const duplicatedStudentAccount = await getStudentByStudentCode(
+            validPayload.studentCode
+        );
+
+        if (
+            duplicatedStudentAccount &&
+            duplicatedStudentAccount.studentId !== studentId
+        )
+            throw new UserAlreadyExistError(
+                ResponseMessage.USER_ALREADY_EXISTS
+            );
+    }
+
+    await prisma.student.update({
+        where: {
+            studentId: studentId,
+        },
+        data: {
+            ...validPayload,
+            birthdate:
+                validPayload.birthdate && new Date(validPayload.birthdate),
+        },
+    });
 };
 
 export default {
-    getUserDTOs,
-    getUserDTO,
-    insertUser,
-    login,
-    refreshToken,
-    logout,
-    deleteUser,
-    updateUser,
+    // admin
+    insertAdmin,
+    loginAsAdmin,
+    refreshAdminToken,
+    logoutAsAdmin,
+    deleteAdmin,
+    getAdminDTO,
+    updateAdmin,
+    insertStudents,
+    // student
+    getStudentDTOs,
+    loginAsStudent,
+    refreshStudentToken,
+    logoutAsStudent,
+    deleteStudent,
+    getStudentDTO,
+    updateStudent,
 };

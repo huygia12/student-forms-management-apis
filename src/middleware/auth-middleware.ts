@@ -1,11 +1,10 @@
 import {Request, Response, NextFunction} from "express";
 import jwtService from "../services/jwt-service";
-import {UserInToken} from "@/common/types";
+import {UserInToken, UserRole} from "@/common/types";
 import {AuthToken, ResponseMessage} from "@/common/constants";
 import MissingTokenError from "@/errors/auth/missing-token";
 import InvalidTokenError from "@/errors/auth/invalid-token";
 import AccessDenided from "@/errors/auth/access-denied";
-import {UserRole} from "@prisma/client";
 
 const isAuthorized = (req: Request, res: Response, next: NextFunction) => {
     const accessToken: string | string[] | undefined =
@@ -50,7 +49,7 @@ const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
         accessToken.replace("Bearer ", "")
     ) as UserInToken;
 
-    if (user.role !== UserRole.STAFF) {
+    if (user.role !== UserRole.ADMIN) {
         console.debug(
             `[auth-middleware] Check request from admin has been failed: access denied`
         );

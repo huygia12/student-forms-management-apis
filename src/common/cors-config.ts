@@ -31,5 +31,5 @@ export const options: CorsOptions = {
     ],
     optionsSuccessStatus: 200,
     credentials: true,
-    origin: [...whiteList, `https://admin.socket.io`],
+    origin: [...whiteList, `https://admins.socket.io`],
 };
