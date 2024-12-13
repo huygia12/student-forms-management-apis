@@ -127,7 +127,6 @@ const getAdminDTO = async (adminId: string): Promise<AdminDTO | null> => {
         },
         select: {
             adminId: true,
-            avatar: true,
             email: true,
             username: true,
             createdAt: true,
@@ -165,7 +164,6 @@ const insertAdmin = async (validPayload: AdminSignup): Promise<void> => {
             username: validPayload.username,
             password: hashSync(validPayload.password, saltOfRound),
             email: validPayload.email,
-            avatar: validPayload.avatar,
         },
     });
 };
@@ -423,12 +421,7 @@ const getStudentDTO = async (studentId: string): Promise<StudentDTO | null> => {
         select: {
             studentId: true,
             studentCode: true,
-            avatar: true,
             username: true,
-            major: true,
-            phoneNumber: true,
-            gender: true,
-            birthdate: true,
             createdAt: true,
             deletedAt: true,
         },
@@ -466,7 +459,6 @@ const insertStudents = async (validPayload: StudentSignup): Promise<void> => {
     const data = validPayload.map((e) => {
         return {
             ...e,
-            birthdate: new Date(e.birthdate),
             password: hashSync(e.password, saltOfRound),
         };
     });
@@ -486,12 +478,7 @@ const getStudentDTOs = async (
         select: {
             studentId: true,
             studentCode: true,
-            avatar: true,
             username: true,
-            major: true,
-            phoneNumber: true,
-            gender: true,
-            birthdate: true,
             createdAt: true,
             deletedAt: true,
         },
@@ -613,11 +600,7 @@ const updateStudent = async (
         where: {
             studentId: studentId,
         },
-        data: {
-            ...validPayload,
-            birthdate:
-                validPayload.birthdate && new Date(validPayload.birthdate),
-        },
+        data: validPayload,
     });
 };
 

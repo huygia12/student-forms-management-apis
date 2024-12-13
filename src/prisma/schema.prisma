@@ -10,7 +10,6 @@ datasource db {
 model Admin {
   adminId       String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   password      String
-  avatar        String?        @default("default-avatar.jpg")
   username      String         @db.VarChar(255)
   email         String         @unique(map: "email_unique")
   refreshTokens String[]       @default([])
@@ -52,12 +51,7 @@ model PersonalForm {
 model Student {
   studentId     String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   password      String
-  avatar        String?        @default("default-avatar.jpg")
   username      String         @db.VarChar(255)
-  major         String         @db.VarChar(255)
-  phoneNumber   String?
-  gender        Gender
-  birthdate     DateTime       @db.Timestamptz(6)
   refreshTokens String[]       @default([])
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
   deletedAt     DateTime?      @db.Timestamptz(6)

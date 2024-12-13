@@ -1,4 +1,3 @@
-import {Gender} from "@prisma/client";
 import {RequestMethod, ResponseMessage} from "./constants";
 import zod, {ZodSchema, z} from "zod";
 
@@ -38,7 +37,6 @@ const adminSignupSchema = zod
     .object({
         email: blankCheck(),
         username: blankCheck(),
-        avatar: blankCheck().optional(),
         password: z.string().min(6),
     })
     .strict();
@@ -63,14 +61,7 @@ const studentSignupSchema = zod.array(
         .object({
             studentCode: blankCheck(),
             password: z.string().min(6),
-            avatar: blankCheck().optional(),
             username: blankCheck(),
-            major: blankCheck(),
-            phoneNumber: blankCheck().optional(),
-            gender: z.enum([Gender.FEMALE, Gender.MALE]),
-            birthdate: z.string().refine((value) => isValidDate(value), {
-                message: "Invalid date format or value. Expected dd/MM/yyyy.",
-            }),
         })
         .strict()
 );
@@ -78,17 +69,8 @@ const studentSignupSchema = zod.array(
 const studentUpdateSchema = zod
     .object({
         studentCode: blankCheck().optional(),
-        avatar: blankCheck().optional(),
         username: blankCheck().optional(),
-        major: blankCheck().optional(),
         phoneNumber: blankCheck().optional(),
-        gender: z.enum([Gender.FEMALE, Gender.MALE]).optional(),
-        birthdate: z
-            .string()
-            .refine((value) => isValidDate(value), {
-                message: "Invalid date format or value. Expected dd/MM/yyyy.",
-            })
-            .optional(),
     })
     .strict();
 
