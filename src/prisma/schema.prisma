@@ -27,8 +27,6 @@ model Category {
 model Field {
   fieldId        String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name           String       @db.VarChar(255)
-  fieldType      FieldType
-  dataType       String       @db.VarChar(255)
   value          String
   personalFormId String       @db.Uuid
   PersonalForm   PersonalForm @relation(fields: [personalFormId], references: [personalFormId], onDelete: NoAction, onUpdate: NoAction)

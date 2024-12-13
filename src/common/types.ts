@@ -24,3 +24,8 @@ export interface UserInToken {
     username: string;
     role: UserRole;
 }
+
+export interface Entry {
+    name: string;
+    value: string;
+}
