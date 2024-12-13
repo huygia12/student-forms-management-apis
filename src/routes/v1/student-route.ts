@@ -8,7 +8,6 @@ const router = express.Router();
 router.post(
     "/signup",
     expressSchemaValidator("/students/signup"),
-    authMiddleware.isAdmin,
     userController.signupAsStudent
 );
 router.post(

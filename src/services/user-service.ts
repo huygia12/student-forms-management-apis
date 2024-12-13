@@ -430,40 +430,20 @@ const getStudentDTO = async (studentId: string): Promise<StudentDTO | null> => {
     return student;
 };
 
-const getDuplicateStudentCode = async (
-    studentCodes: string[]
-): Promise<string[]> => {
-    const studentIds = await prisma.student
-        .findMany({
-            where: {
-                studentCode: {
-                    in: studentCodes,
-                },
-            },
-        })
-        .then((data) => data.map((e) => e.studentCode));
-
-    return studentIds;
-};
-
 const insertStudents = async (validPayload: StudentSignup): Promise<void> => {
-    const duplicatedStudentCodes = await getDuplicateStudentCode(
-        validPayload.map((e) => e.studentCode)
+    const duplicatedStudentCode = await getStudentByStudentCode(
+        validPayload.studentCode
     );
 
-    if (duplicatedStudentCodes.length > 0)
-        throw new UserAlreadyExistError(
-            `Duplicated student code found: [${duplicatedStudentCodes.join(", ")}]`
-        );
+    if (duplicatedStudentCode)
+        throw new UserAlreadyExistError(ResponseMessage.USER_ALREADY_EXISTS);
 
-    const data = validPayload.map((e) => {
-        return {
-            ...e,
-            password: hashSync(e.password, saltOfRound),
-        };
+    await prisma.student.createMany({
+        data: {
+            ...validPayload,
+            password: hashSync(validPayload.password, saltOfRound),
+        },
     });
-
-    await prisma.student.createMany({data: data});
 };
 
 const getStudentDTOs = async (

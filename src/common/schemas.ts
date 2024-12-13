@@ -56,15 +56,13 @@ const studentLoginSchema = zod
     })
     .strict();
 
-const studentSignupSchema = zod.array(
-    z
-        .object({
-            studentCode: blankCheck(),
-            password: z.string().min(6),
-            username: blankCheck(),
-        })
-        .strict()
-);
+const studentSignupSchema = z
+    .object({
+        studentCode: blankCheck(),
+        password: z.string().min(6),
+        username: blankCheck(),
+    })
+    .strict();
 
 const studentUpdateSchema = zod
     .object({
