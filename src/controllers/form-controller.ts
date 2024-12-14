@@ -20,4 +20,20 @@ const createForm = async (req: Request, res: Response) => {
     });
 };
 
-export default {createForm};
+const getForms = async (req: Request, res: Response) => {
+    const categoryId = req.query.categoryId as string;
+    const studentId = req.query.studentId as string;
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+    const forms = await formService.getFormFullJoins(limit, {
+        studentId: studentId,
+        categoryId: categoryId,
+    });
+
+    return res.status(StatusCodes.CREATED).json({
+        message: ResponseMessage.SUCCESS,
+        info: forms,
+    });
+};
+
+export default {createForm, getForms};

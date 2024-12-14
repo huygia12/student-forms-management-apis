@@ -15,7 +15,7 @@ model Admin {
   refreshTokens String[]       @default([])
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
   deletedAt     DateTime?      @db.Timestamptz(6)
-  PersonalForm  PersonalForm[]
+  personalForm  PersonalForm[]
 }
 
 model Category {
@@ -29,7 +29,7 @@ model Field {
   name           String       @db.VarChar(255)
   value          String
   personalFormId String       @db.Uuid
-  PersonalForm   PersonalForm @relation(fields: [personalFormId], references: [personalFormId], onDelete: NoAction, onUpdate: NoAction)
+  personalForm   PersonalForm @relation(fields: [personalFormId], references: [personalFormId], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model PersonalForm {
@@ -40,10 +40,10 @@ model PersonalForm {
   approvedBy     String?   @db.Uuid
   createdAt      DateTime  @default(now()) @db.Timestamptz(6)
   deletedAt      DateTime? @db.Timestamptz(6)
-  Field          Field[]
-  Admin          Admin?    @relation(fields: [approvedBy], references: [adminId], onDelete: NoAction, onUpdate: NoAction)
-  Category       Category  @relation(fields: [categoryId], references: [categoryId], onDelete: NoAction, onUpdate: NoAction)
-  Student        Student   @relation(fields: [studentId], references: [studentId], onDelete: NoAction, onUpdate: NoAction)
+  fields          Field[]
+  admin          Admin?    @relation(fields: [approvedBy], references: [adminId], onDelete: NoAction, onUpdate: NoAction)
+  category       Category  @relation(fields: [categoryId], references: [categoryId], onDelete: NoAction, onUpdate: NoAction)
+  student        Student   @relation(fields: [studentId], references: [studentId], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Student {
@@ -54,7 +54,7 @@ model Student {
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
   deletedAt     DateTime?      @db.Timestamptz(6)
   studentCode   String         @unique(map: "studentcode_unique")
-  PersonalForm  PersonalForm[]
+  personalForms  PersonalForm[]
 }
 
 enum FieldType {

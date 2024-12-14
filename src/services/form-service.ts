@@ -1,4 +1,4 @@
-import {Entry} from "@/common/types";
+import {Entry, FormFullJoin} from "@/common/types";
 import prisma from "@/common/prisma-client";
 
 const insertForm = async (
@@ -25,8 +25,30 @@ const insertForm = async (
             })),
         });
     });
-    console.log("Form inserted successfully");
     return true;
 };
 
-export default {insertForm};
+const getFormFullJoins = async (
+    limit: number = 10,
+    params: {
+        categoryId?: string;
+        studentId?: string;
+    }
+): Promise<FormFullJoin[]> => {
+    const forms = await prisma.personalForm.findMany({
+        where: {
+            studentId: params.studentId,
+            categoryId: params.categoryId,
+        },
+        include: {
+            fields: true,
+            student: true,
+            category: true,
+        },
+        skip: limit,
+    });
+
+    return forms;
+};
+
+export default {insertForm, getFormFullJoins};
