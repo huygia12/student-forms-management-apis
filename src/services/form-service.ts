@@ -28,13 +28,12 @@ const insertForm = async (
     return true;
 };
 
-const getFormFullJoins = async (
-    limit: number = 10,
-    params: {
-        categoryId?: string;
-        studentId?: string;
-    }
-): Promise<FormFullJoin[]> => {
+const getFormFullJoins = async (params: {
+    categoryId?: string;
+    studentId?: string;
+    limit: number;
+    currentPage: number;
+}): Promise<FormFullJoin[]> => {
     const forms = await prisma.personalForm.findMany({
         where: {
             studentId: params.studentId,
@@ -42,12 +41,17 @@ const getFormFullJoins = async (
         },
         include: {
             fields: true,
-            student: true,
+            student: {
+                select: {
+                    studentId: true,
+                    studentCode: true,
+                    username: true,
+                },
+            },
             category: true,
         },
-        skip: limit,
+        skip: (params.currentPage - 1) * params.limit,
     });
-
     return forms;
 };
 

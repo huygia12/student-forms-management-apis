@@ -23,14 +23,19 @@ const createForm = async (req: Request, res: Response) => {
 const getForms = async (req: Request, res: Response) => {
     const categoryId = req.query.categoryId as string;
     const studentId = req.query.studentId as string;
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const currentPage = req.query.currentPage
+        ? Number(req.query.currentPage)
+        : 1;
 
-    const forms = await formService.getFormFullJoins(limit, {
+    const forms = await formService.getFormFullJoins({
         studentId: studentId,
         categoryId: categoryId,
+        limit: limit,
+        currentPage: currentPage,
     });
 
-    return res.status(StatusCodes.CREATED).json({
+    return res.status(StatusCodes.OK).json({
         message: ResponseMessage.SUCCESS,
         info: forms,
     });
