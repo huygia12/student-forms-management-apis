@@ -33,8 +33,8 @@ const getForms = async (req: Request, res: Response) => {
         ...reqBody,
         limit: reqBody.limit || 10,
         currentPage: reqBody.currentPage || 1,
-        studentId: studentId.length > 0 ? studentId : undefined,
-        categoryId: categoryId.length > 0 ? categoryId : undefined,
+        studentId: studentId,
+        categoryId: categoryId,
     });
 
     return res.status(StatusCodes.OK).json({
