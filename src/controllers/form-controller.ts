@@ -6,21 +6,78 @@ import {FormsRetrievement, FormStatusUpdate} from "@/common/schemas";
 import {FormStatus} from "@prisma/client";
 import jwtService from "@/services/jwt-service";
 import {UserInToken} from "@/common/types";
+import userService from "@/services/user-service";
+import UserNotFoundError from "@/errors/user/user-not-found";
+import FormNotFoundError from "@/errors/form/form-not-found";
+
+const transformToEntries = (data: Record<string, string>) => {
+    return Object.entries(data).map(([key, value]) => ({
+        name: key,
+        value: value,
+    }));
+};
 
 const createForm = async (req: Request, res: Response) => {
     const studentId = req.query.studentId as string;
     const categoryId = req.query.categoryId as string;
     const reqBody = req.body;
 
-    const entries = Object.entries(reqBody).map(([key, value]) => ({
-        name: key as string,
-        value: value as string,
-    }));
+    const entries = transformToEntries(reqBody);
 
-    await formService.insertForm(entries, studentId, categoryId);
+    const formId = await formService.insertForm(entries, studentId, categoryId);
 
     return res.status(StatusCodes.CREATED).json({
         message: ResponseMessage.SUCCESS,
+        info: {
+            formId: formId,
+        },
+    });
+};
+
+const uploadForm = async (req: Request, res: Response) => {
+    const adminId = req.query.adminId as string;
+    const categoryId = req.body.categoryId as string;
+    const status = req.body.status as FormStatus;
+    const fields = req.body.fields;
+    const studentCode = req.body.fields.STUDENT_CODE as string;
+
+    const student = await userService.getStudentDTOByStudentCode(studentCode);
+    if (!student)
+        throw new UserNotFoundError(
+            "Student with code " + studentCode + " cannot be found"
+        );
+
+    const entries = transformToEntries(fields);
+
+    const formId = await formService.insertForm(
+        entries,
+        student.studentId,
+        categoryId,
+        status,
+        adminId
+    );
+
+    return res.status(StatusCodes.CREATED).json({
+        message: ResponseMessage.SUCCESS,
+        info: {
+            formId: formId,
+        },
+    });
+};
+
+const getForm = async (req: Request, res: Response) => {
+    const formId = req.params.id as string;
+
+    const form = await formService.getFormFullJoin(formId);
+
+    if (!form)
+        throw new FormNotFoundError(
+            "Form with id " + formId + " cannot be found"
+        );
+
+    return res.status(StatusCodes.OK).json({
+        message: ResponseMessage.SUCCESS,
+        info: form,
     });
 };
 
@@ -65,4 +122,4 @@ const updateFormStatus = async (req: Request, res: Response) => {
     });
 };
 
-export default {createForm, getForms, udpateFormStatus: updateFormStatus};
+export default {createForm, getForms, getForm, updateFormStatus, uploadForm};

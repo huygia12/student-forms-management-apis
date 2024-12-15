@@ -5,18 +5,25 @@ import {FormStatus, PersonalForm} from "@prisma/client";
 const insertForm = async (
     fields: Entry[],
     studentId: string,
-    categoryId: string
-) => {
+    categoryId: string,
+    status: FormStatus = FormStatus.STAGING,
+    adminId?: string
+): Promise<string | undefined> => {
+    let formId;
     await prisma.$transaction(async (prisma) => {
         const form = await prisma.personalForm.create({
             data: {
                 studentId: studentId,
                 categoryId: categoryId,
+                status: status,
+                updatedBy: adminId,
             },
             select: {
                 personalFormId: true,
             },
         });
+
+        formId = form.personalFormId;
 
         await prisma.field.createMany({
             data: fields.map((entry) => ({
@@ -26,7 +33,30 @@ const insertForm = async (
             })),
         });
     });
-    return true;
+
+    return formId;
+};
+
+const getFormFullJoin = async (
+    formId: string
+): Promise<FormFullJoin | null> => {
+    const form = await prisma.personalForm.findFirst({
+        where: {
+            personalFormId: formId,
+        },
+        include: {
+            fields: true,
+            student: {
+                select: {
+                    studentId: true,
+                    studentCode: true,
+                    username: true,
+                },
+            },
+            category: true,
+        },
+    });
+    return form;
 };
 
 const getFormFullJoins = async (params: {
@@ -36,7 +66,6 @@ const getFormFullJoins = async (params: {
     limit: number;
     currentPage: number;
 }): Promise<FormFullJoin[]> => {
-    console.log(params);
     const forms = await prisma.personalForm.findMany({
         where: {
             studentId: params.studentId,
@@ -83,4 +112,9 @@ const updateFormStatus = async (
     return form;
 };
 
-export default {insertForm, getFormFullJoins, updateFormStatus};
+export default {
+    insertForm,
+    getFormFullJoins,
+    getFormFullJoin,
+    updateFormStatus,
+};

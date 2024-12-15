@@ -27,6 +27,15 @@ const isValidDate = (value: string): boolean => {
     );
 };
 
+const transformToEntries = (data: Record<string, string>) => {
+    return Object.entries(data).map(([key, value]) => ({name: key, value}));
+};
+
+const EntrySchema = z.object({
+    name: z.string(),
+    value: z.string(),
+});
+
 const adminLoginSchema = zod
     .object({
         email: blankCheck(),
@@ -86,9 +95,31 @@ const formRetrivementSchema = z
 
 const formStatusUpdateSchema = z
     .object({
-        status: z.enum([FormStatus.APPROVED, FormStatus.DENIED]),
+        status: z.enum([
+            FormStatus.APPROVED,
+            FormStatus.DENIED,
+            FormStatus.STAGING,
+        ]),
     })
     .strict();
+
+const formInsertionSchema = z.preprocess(
+    (data) => transformToEntries(data as Record<string, string>),
+    z.array(EntrySchema)
+);
+
+const formUploadSchema = z.object({
+    categoryId: z.string(),
+    status: z.enum([
+        FormStatus.APPROVED,
+        FormStatus.DENIED,
+        FormStatus.STAGING,
+    ]),
+    fields: z.preprocess(
+        (data) => transformToEntries(data as Record<string, string>),
+        z.array(EntrySchema)
+    ),
+});
 
 export type AdminSignup = z.infer<typeof adminSignupSchema>;
 
@@ -105,6 +136,8 @@ export type StudentUpdate = z.infer<typeof studentUpdateSchema>;
 export type FormsRetrievement = z.infer<typeof formRetrivementSchema>;
 
 export type FormStatusUpdate = z.infer<typeof formStatusUpdateSchema>;
+
+export type FormUpload = z.infer<typeof formUploadSchema>;
 
 export default {
     ["/admins/signup"]: {
@@ -127,6 +160,12 @@ export default {
     },
     ["/forms"]: {
         [RequestMethod.POST]: formRetrivementSchema,
+    },
+    ["/createForm"]: {
+        [RequestMethod.POST]: formInsertionSchema,
+    },
+    ["/uploadForm"]: {
+        [RequestMethod.POST]: formUploadSchema,
     },
     ["/forms/:id"]: {
         [RequestMethod.PATCH]: formStatusUpdateSchema,

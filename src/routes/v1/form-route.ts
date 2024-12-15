@@ -6,13 +6,23 @@ import {expressSchemaValidator} from "@/middleware/schema-validator";
 const router = express.Router();
 router.use(authMiddleware.isAuthorized);
 
-router.post("/createForm", formController.createForm);
+router.get("/:id", formController.getForm);
+router.post(
+    "/createForm",
+    expressSchemaValidator("/createForm"),
+    formController.createForm
+);
+router.post(
+    "/uploadForm",
+    expressSchemaValidator("/uploadForm"),
+    formController.uploadForm
+);
 router.post("/", expressSchemaValidator("/forms"), formController.getForms);
 router.patch(
     "/:id",
     authMiddleware.isAdmin,
     expressSchemaValidator("/forms/:id"),
-    formController.udpateFormStatus
+    formController.updateFormStatus
 );
 
 export default router;

@@ -481,6 +481,25 @@ const getStudentByStudentCode = async (
     return student;
 };
 
+const getStudentDTOByStudentCode = async (
+    studentCode: string
+): Promise<StudentDTO | null> => {
+    const student = await prisma.student.findFirst({
+        where: {
+            studentCode: studentCode,
+        },
+        select: {
+            studentId: true,
+            studentCode: true,
+            username: true,
+            createdAt: true,
+            deletedAt: true,
+        },
+    });
+
+    return student;
+};
+
 const getValidStudent = async (
     email: string,
     password: string
@@ -602,4 +621,5 @@ export default {
     deleteStudent,
     getStudentDTO,
     updateStudent,
+    getStudentDTOByStudentCode,
 };
