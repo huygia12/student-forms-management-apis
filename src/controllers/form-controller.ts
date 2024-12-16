@@ -39,7 +39,7 @@ const uploadForm = async (req: Request, res: Response) => {
     const categoryId = req.body.categoryId as string;
     const status = req.body.status as FormStatus;
     const fields = req.body.fields;
-    const studentCode = req.body.fields.STUDENT_CODE as string;
+    const studentCode = req.body.fields.STUDENT_ID as string;
 
     const student = await userService.getStudentDTOByStudentCode(studentCode);
     if (!student)
