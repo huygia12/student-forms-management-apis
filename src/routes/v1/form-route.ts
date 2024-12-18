@@ -17,6 +17,12 @@ router.post(
     expressSchemaValidator("/uploadForm"),
     formController.uploadForm
 );
+router.post(
+    "/:id",
+    expressSchemaValidator("/createForm"),
+    formController.updateForm
+);
+router.delete("/:id", formController.deleteForm);
 router.post("/", expressSchemaValidator("/forms"), formController.getForms);
 router.patch(
     "/:id",

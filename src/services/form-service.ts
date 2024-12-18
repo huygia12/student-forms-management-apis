@@ -1,6 +1,8 @@
 import {Entry, FormFullJoin} from "@/common/types";
 import prisma from "@/common/prisma-client";
 import {FormStatus, PersonalForm} from "@prisma/client";
+import FormNotFoundError from "@/errors/form/form-not-found";
+import FormActionDenied from "@/errors/form/form-action-denied";
 
 const insertForm = async (
     fields: Entry[],
@@ -112,9 +114,77 @@ const updateFormStatus = async (
     return form;
 };
 
+const getForm = async (formId: string): Promise<PersonalForm | null> => {
+    const form = await prisma.personalForm.findFirst({
+        where: {
+            personalFormId: formId,
+        },
+    });
+
+    return form;
+};
+
+const updateForm = async (formId: string, fields: Entry[]): Promise<void> => {
+    const form = await getForm(formId);
+    if (!form) {
+        throw new FormNotFoundError(
+            "Form with id " + formId + " cannot be found"
+        );
+    }
+
+    if (form.status !== FormStatus.STAGING) {
+        throw new FormActionDenied("unable to update this form");
+    }
+
+    await prisma.$transaction(async (prisma) => {
+        await prisma.field.deleteMany({
+            where: {
+                personalFormId: formId,
+            },
+        });
+
+        await prisma.field.createMany({
+            data: fields.map((entry) => ({
+                personalFormId: formId,
+                name: entry.name,
+                value: entry.value,
+            })),
+        });
+    });
+};
+
+const deleteForm = async (formId: string) => {
+    const form = await getForm(formId);
+    if (!form) {
+        throw new FormNotFoundError(
+            "Form with id " + formId + " cannot be found"
+        );
+    }
+
+    if (form.status === FormStatus.APPROVED) {
+        throw new FormActionDenied("unable to delete this form");
+    }
+
+    await prisma.$transaction(async (prisma) => {
+        await prisma.field.deleteMany({
+            where: {
+                personalFormId: formId,
+            },
+        });
+
+        await prisma.personalForm.delete({
+            where: {
+                personalFormId: formId,
+            },
+        });
+    });
+};
+
 export default {
     insertForm,
+    updateForm,
     getFormFullJoins,
     getFormFullJoin,
     updateFormStatus,
+    deleteForm,
 };

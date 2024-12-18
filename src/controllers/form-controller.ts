@@ -34,6 +34,29 @@ const createForm = async (req: Request, res: Response) => {
     });
 };
 
+const updateForm = async (req: Request, res: Response) => {
+    const formId = req.params.id as string;
+    const reqBody = req.body;
+
+    const entries = transformToEntries(reqBody);
+
+    await formService.updateForm(formId, entries);
+
+    return res.status(StatusCodes.OK).json({
+        message: ResponseMessage.SUCCESS,
+    });
+};
+
+const deleteForm = async (req: Request, res: Response) => {
+    const formId = req.params.id as string;
+
+    await formService.deleteForm(formId);
+
+    return res.status(StatusCodes.OK).json({
+        message: ResponseMessage.SUCCESS,
+    });
+};
+
 const uploadForm = async (req: Request, res: Response) => {
     const adminId = req.query.adminId as string;
     const categoryId = req.body.categoryId as string;
@@ -122,4 +145,12 @@ const updateFormStatus = async (req: Request, res: Response) => {
     });
 };
 
-export default {createForm, getForms, getForm, updateFormStatus, uploadForm};
+export default {
+    createForm,
+    getForms,
+    getForm,
+    updateFormStatus,
+    uploadForm,
+    updateForm,
+    deleteForm,
+};

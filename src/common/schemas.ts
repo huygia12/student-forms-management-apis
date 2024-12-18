@@ -10,23 +10,6 @@ const blankCheck = () =>
             message: ResponseMessage.BLANK_INPUT,
         });
 
-const isValidDate = (value: string): boolean => {
-    const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Matches dd/MM/yyyy format
-    if (!regex.test(value)) {
-        return false;
-    }
-
-    const [day, month, year] = value.split("/").map(Number);
-    const date = new Date(year, month - 1, day);
-
-    // Check if the date parts are valid
-    return (
-        date.getFullYear() === year &&
-        date.getMonth() === month - 1 &&
-        date.getDate() === day
-    );
-};
-
 const transformToEntries = (data: Record<string, string>) => {
     return Object.entries(data).map(([key, value]) => ({name: key, value}));
 };
