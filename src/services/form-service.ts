@@ -90,7 +90,10 @@ const getFormFullJoins = async (params: {
             },
             category: true,
         },
-        take: params.limit,
+        orderBy: {
+            createdAt: "desc",
+        },
+        take: params.limit == 0 ? undefined : params.limit,
         skip: (params.currentPage - 1) * params.limit,
     });
     return forms;

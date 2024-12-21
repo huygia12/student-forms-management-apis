@@ -111,8 +111,8 @@ const getForms = async (req: Request, res: Response) => {
 
     const forms = await formService.getFormFullJoins({
         ...reqBody,
-        limit: reqBody.limit || 10,
-        currentPage: reqBody.currentPage || 1,
+        limit: reqBody.limit ?? 20,
+        currentPage: reqBody.currentPage ?? 1,
         studentId: studentId,
         categoryId: categoryId,
     });
