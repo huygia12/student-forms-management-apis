@@ -183,6 +183,43 @@ const deleteForm = async (formId: string) => {
     });
 };
 
+const getFormNumberOfEachCategories = async (params: {
+    month: number;
+    year: number;
+}): Promise<{categoryId: string; totalForms: number}[]> => {
+    console.log(params);
+    const startOfDate = new Date(params.year, params.month - 1, 1);
+    const endOfDate = new Date(params.year, params.month, 1);
+
+    const results = await prisma.personalForm.groupBy({
+        by: "categoryId",
+        where: {
+            createdAt: {
+                gte: startOfDate,
+                lt: endOfDate,
+            },
+        },
+        _count: true,
+    });
+
+    const formattedResults = results.map((result) => ({
+        categoryId: result.categoryId,
+        totalForms: result._count,
+    }));
+
+    return formattedResults;
+};
+
+const getNumberOfForms = async (params: {userId?: string}): Promise<number> => {
+    const numberOfForms = await prisma.personalForm.count({
+        where: {
+            studentId: params.userId,
+        },
+    });
+
+    return numberOfForms;
+};
+
 export default {
     insertForm,
     updateForm,
@@ -190,4 +227,6 @@ export default {
     getFormFullJoin,
     updateFormStatus,
     deleteForm,
+    getFormNumberOfEachCategories,
+    getNumberOfForms,
 };

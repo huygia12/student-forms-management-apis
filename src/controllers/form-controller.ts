@@ -5,7 +5,7 @@ import {ResponseMessage} from "@/common/constants";
 import {FormsRetrievement, FormStatusUpdate} from "@/common/schemas";
 import {FormStatus} from "@prisma/client";
 import jwtService from "@/services/jwt-service";
-import {UserInToken} from "@/common/types";
+import {UserInToken, UserRole} from "@/common/types";
 import userService from "@/services/user-service";
 import UserNotFoundError from "@/errors/user/user-not-found";
 import FormNotFoundError from "@/errors/form/form-not-found";
@@ -145,6 +145,41 @@ const updateFormStatus = async (req: Request, res: Response) => {
     });
 };
 
+const getEachCategoryNumberOfForms = async (req: Request, res: Response) => {
+    const month = req.query.month as string;
+    const year = req.query.year as string;
+    const current = new Date();
+
+    const data = await formService.getFormNumberOfEachCategories({
+        month: month ? Number(month) : current.getMonth() + 1,
+        year: year ? Number(year) : current.getFullYear(),
+    });
+
+    return res.status(StatusCodes.OK).json({
+        message: ResponseMessage.SUCCESS,
+        info: data,
+    });
+};
+
+const getNumberOfForms = async (req: Request, res: Response) => {
+    const accessToken: string | string[] | undefined =
+        req.headers["authorization"];
+    const {role, userId} = jwtService.decodeToken(
+        accessToken!.replace("Bearer ", "")
+    ) as UserInToken;
+
+    const data = await formService.getNumberOfForms({
+        userId: UserRole.ADMIN === role ? undefined : userId,
+    });
+
+    return res.status(StatusCodes.OK).json({
+        message: ResponseMessage.SUCCESS,
+        info: {
+            totalForms: data,
+        },
+    });
+};
+
 export default {
     createForm,
     getForms,
@@ -153,4 +188,6 @@ export default {
     uploadForm,
     updateForm,
     deleteForm,
+    getEachCategoryNumberOfForms,
+    getNumberOfForms,
 };

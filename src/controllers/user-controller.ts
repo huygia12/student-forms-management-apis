@@ -15,6 +15,7 @@ import {AuthToken, ResponseMessage} from "@/common/constants";
 import MissingTokenError from "@/errors/auth/missing-token";
 import ms from "ms";
 import UserNotFoundError from "@/errors/user/user-not-found";
+import WrongPasswordError from "@/errors/user/wrong-password";
 
 /**
  * If updated email had already been existed in DB, return conflict status
@@ -149,6 +150,15 @@ const updateAdminInfo = async (req: Request, res: Response) => {
     const adminId = req.params.id as string;
     const reqBody = req.body as AdminUpdate;
 
+    if (reqBody.password !== undefined) {
+        if (
+            !reqBody.retypePassword ||
+            reqBody.password != reqBody.retypePassword
+        ) {
+            throw new WrongPasswordError("Retype password is not match");
+        }
+    }
+
     await userService.updateAdmin(adminId, reqBody);
 
     res.status(StatusCodes.OK).json({
@@ -264,6 +274,15 @@ const refreshStudentToken = async (req: Request, res: Response) => {
 const updateStudentInfo = async (req: Request, res: Response) => {
     const studentId = req.params.id as string;
     const reqBody = req.body as StudentUpdate;
+
+    if (reqBody.password !== undefined) {
+        if (
+            !reqBody.retypePassword ||
+            reqBody.password != reqBody.retypePassword
+        ) {
+            throw new WrongPasswordError("Retype password is not match");
+        }
+    }
 
     await userService.updateStudent(studentId, reqBody);
 

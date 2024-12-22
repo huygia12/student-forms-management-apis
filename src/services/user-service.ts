@@ -42,7 +42,14 @@ const updateAdmin = async (
         where: {
             adminId: adminId,
         },
-        data: validPayload,
+        data: {
+            ...validPayload,
+            email: validPayload.email,
+            username: validPayload.username,
+            password:
+                validPayload.password &&
+                hashSync(validPayload.password, saltOfRound),
+        },
     });
 };
 
@@ -599,7 +606,14 @@ const updateStudent = async (
         where: {
             studentId: studentId,
         },
-        data: validPayload,
+        data: {
+            ...validPayload,
+            studentCode: validPayload.studentCode,
+            username: validPayload.username,
+            password:
+                validPayload.password &&
+                hashSync(validPayload.password, saltOfRound),
+        },
     });
 };
 

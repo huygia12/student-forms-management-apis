@@ -7,6 +7,12 @@ const router = express.Router();
 router.use(authMiddleware.isAuthorized);
 
 router.get("/:id", formController.getForm);
+router.get("/statistic/count", formController.getNumberOfForms);
+router.get(
+    "/statistic/group-by-category",
+    authMiddleware.isAdmin,
+    formController.getEachCategoryNumberOfForms
+);
 router.post(
     "/createForm",
     expressSchemaValidator("/createForm"),

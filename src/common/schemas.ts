@@ -1,14 +1,11 @@
 import {FormStatus} from "@prisma/client";
 import {RequestMethod, ResponseMessage} from "./constants";
-import zod, {ZodSchema, z} from "zod";
+import {ZodSchema, ZodString, z} from "zod";
 
-const blankCheck = () =>
-    zod
-        .string()
-        .trim()
-        .refine((value) => value !== "", {
-            message: ResponseMessage.BLANK_INPUT,
-        });
+const blankCheck = (schema: ZodString = z.string()) =>
+    schema.trim().refine((value) => value !== "", {
+        message: ResponseMessage.BLANK_INPUT,
+    });
 
 const transformToEntries = (data: Record<string, string>) => {
     return Object.entries(data).map(([key, value]) => ({name: key, value}));
@@ -19,14 +16,14 @@ const EntrySchema = z.object({
     value: z.string(),
 });
 
-const adminLoginSchema = zod
+const adminLoginSchema = z
     .object({
         email: blankCheck(),
         password: blankCheck(),
     })
     .strict();
 
-const adminSignupSchema = zod
+const adminSignupSchema = z
     .object({
         email: blankCheck(),
         username: blankCheck(),
@@ -34,15 +31,16 @@ const adminSignupSchema = zod
     })
     .strict();
 
-const adminUpdateSchema = zod
+const adminUpdateSchema = z
     .object({
         email: blankCheck().optional(),
         username: blankCheck().optional(),
-        avatar: blankCheck().optional(),
+        password: blankCheck(z.string().min(6)).optional(),
+        retypePassword: blankCheck(z.string().min(6)).optional(),
     })
     .strict();
 
-const studentLoginSchema = zod
+const studentLoginSchema = z
     .object({
         studentCode: blankCheck(),
         password: blankCheck(),
@@ -57,11 +55,12 @@ const studentSignupSchema = z
     })
     .strict();
 
-const studentUpdateSchema = zod
+const studentUpdateSchema = z
     .object({
         studentCode: blankCheck().optional(),
         username: blankCheck().optional(),
-        phoneNumber: blankCheck().optional(),
+        password: blankCheck(z.string().min(6)).optional(),
+        retypePassword: blankCheck(z.string().min(6)).optional(),
     })
     .strict();
 
