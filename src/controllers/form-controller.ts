@@ -105,16 +105,25 @@ const getForm = async (req: Request, res: Response) => {
 };
 
 const getForms = async (req: Request, res: Response) => {
-    const categoryId = req.query.categoryId as string;
     const studentId = req.query.studentId as string;
     const reqBody = req.body as FormsRetrievement;
+    const fromDate = req.body.fromDate && parseDate(req.body.fromDate);
+    const toDate = req.body.toDate && parseDate(req.body.toDate);
+    let categoryIds = req.body.categoryIds as string[] | undefined;
+    let status = reqBody.status as FormStatus[] | undefined;
+
+    categoryIds && categoryIds.length === 0 ? undefined : categoryIds;
+    status && status.length === 0 ? undefined : status;
 
     const forms = await formService.getFormFullJoins({
-        ...reqBody,
+        keySearch: req.body.keySearch,
+        categoryIds: categoryIds,
+        status: status,
+        fromDate: fromDate,
+        toDate: toDate,
         limit: reqBody.limit ?? 20,
         currentPage: reqBody.currentPage ?? 1,
         studentId: studentId,
-        categoryId: categoryId,
     });
 
     return res.status(StatusCodes.OK).json({
@@ -146,13 +155,12 @@ const updateFormStatus = async (req: Request, res: Response) => {
 };
 
 const getEachCategoryNumberOfForms = async (req: Request, res: Response) => {
-    const month = req.query.month as string;
-    const year = req.query.year as string;
-    const current = new Date();
+    const fromDate = req.body.fromDate && parseDate(req.body.fromDate);
+    const toDate = req.body.toDate && parseDate(req.body.toDate);
 
     const data = await formService.getFormNumberOfEachCategories({
-        month: month ? Number(month) : current.getMonth() + 1,
-        year: year ? Number(year) : current.getFullYear(),
+        fromDate: fromDate,
+        toDate: toDate,
     });
 
     return res.status(StatusCodes.OK).json({
@@ -178,6 +186,18 @@ const getNumberOfForms = async (req: Request, res: Response) => {
             totalForms: data,
         },
     });
+};
+
+const parseDate = (dateString: string): Date | undefined => {
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = dateString.match(dateRegex);
+
+    if (!match) {
+        return undefined;
+    }
+
+    const [, day, month, year] = match;
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 };
 
 export default {

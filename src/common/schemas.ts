@@ -7,6 +7,21 @@ const blankCheck = (schema: ZodString = z.string()) =>
         message: ResponseMessage.BLANK_INPUT,
     });
 
+const isValidDate = (value: string): boolean => {
+    const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Matches dd/MM/yyyy format
+    if (!regex.test(value)) {
+        return false;
+    }
+    const [day, month, year] = value.split("/").map(Number);
+    const date = new Date(year, month - 1, day);
+    // Check if the date parts are valid
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+    );
+};
+
 const transformToEntries = (data: Record<string, string>) => {
     return Object.entries(data).map(([key, value]) => ({name: key, value}));
 };
@@ -67,11 +82,26 @@ const studentUpdateSchema = z
 const formRetrivementSchema = z
     .object({
         keySearch: z.string().optional(),
+        categoryIds: z.array(blankCheck()).optional(),
         status: z
-            .enum([FormStatus.APPROVED, FormStatus.DENIED, FormStatus.STAGING])
+            .array(
+                z.enum([
+                    FormStatus.APPROVED,
+                    FormStatus.DENIED,
+                    FormStatus.STAGING,
+                ])
+            )
             .optional(),
         limit: z.number().optional(),
         currentPage: z.number().optional(),
+        fromDate: z
+            .string()
+            .refine((value) => isValidDate(value), "not a valid date")
+            .optional(),
+        toDate: z
+            .string()
+            .refine((value) => isValidDate(value), "not a valid date")
+            .optional(),
     })
     .strict();
 
@@ -103,6 +133,16 @@ const formUploadSchema = z.object({
     ),
 });
 
+const countFormGroupByCategorySchema = z.object({
+    fromDate: z
+        .string()
+        .refine((value) => isValidDate(value), "invalid date")
+        .optional(),
+    toDate: z
+        .string()
+        .refine((value) => isValidDate(value), "invalid date")
+        .optional(),
+});
 export type AdminSignup = z.infer<typeof adminSignupSchema>;
 
 export type AdminLogin = z.infer<typeof adminLoginSchema>;
@@ -143,13 +183,16 @@ export default {
     ["/forms"]: {
         [RequestMethod.POST]: formRetrivementSchema,
     },
-    ["/createForm"]: {
+    ["/forms/createForm"]: {
         [RequestMethod.POST]: formInsertionSchema,
     },
-    ["/uploadForm"]: {
+    ["/forms/uploadForm"]: {
         [RequestMethod.POST]: formUploadSchema,
     },
     ["/forms/:id"]: {
         [RequestMethod.PATCH]: formStatusUpdateSchema,
+    },
+    ["/forms/statistic/group-by-category"]: {
+        [RequestMethod.POST]: countFormGroupByCategorySchema,
     },
 } as {[key: string]: {[method: string]: ZodSchema}};

@@ -62,16 +62,33 @@ const getFormFullJoin = async (
 };
 
 const getFormFullJoins = async (params: {
-    categoryId?: string;
+    categoryIds?: string[];
     studentId?: string;
     keySearch?: string;
+    fromDate?: Date;
+    toDate?: Date;
+    status?: FormStatus[];
     limit: number;
     currentPage: number;
 }): Promise<FormFullJoin[]> => {
+    const startOfDate =
+        params.fromDate && new Date(params.fromDate.setHours(0, 0, 0, 0));
+    const endOfDate =
+        params.toDate && new Date(params.toDate.setHours(23, 59, 59, 999));
+
     const forms = await prisma.personalForm.findMany({
         where: {
             studentId: params.studentId,
-            categoryId: params.categoryId,
+            categoryId: {
+                in: params.categoryIds,
+            },
+            status: {
+                in: params.status,
+            },
+            createdAt: {
+                gte: startOfDate,
+                lte: endOfDate,
+            },
             student: {
                 username: {
                     contains: params.keySearch,
@@ -184,19 +201,20 @@ const deleteForm = async (formId: string) => {
 };
 
 const getFormNumberOfEachCategories = async (params: {
-    month: number;
-    year: number;
+    fromDate?: Date;
+    toDate?: Date;
 }): Promise<{categoryId: string; totalForms: number}[]> => {
-    console.log(params);
-    const startOfDate = new Date(params.year, params.month - 1, 1);
-    const endOfDate = new Date(params.year, params.month, 1);
+    const startOfDate =
+        params.fromDate && new Date(params.fromDate.setHours(0, 0, 0, 0));
+    const endOfDate =
+        params.toDate && new Date(params.toDate.setHours(23, 59, 59, 999));
 
     const results = await prisma.personalForm.groupBy({
         by: "categoryId",
         where: {
             createdAt: {
                 gte: startOfDate,
-                lt: endOfDate,
+                lte: endOfDate,
             },
         },
         _count: true,

@@ -8,24 +8,25 @@ router.use(authMiddleware.isAuthorized);
 
 router.get("/:id", formController.getForm);
 router.get("/statistic/count", formController.getNumberOfForms);
-router.get(
+router.post(
     "/statistic/group-by-category",
     authMiddleware.isAdmin,
+    expressSchemaValidator("/forms/statistic/group-by-category"),
     formController.getEachCategoryNumberOfForms
 );
 router.post(
     "/createForm",
-    expressSchemaValidator("/createForm"),
+    expressSchemaValidator("/forms/createForm"),
     formController.createForm
 );
 router.post(
     "/uploadForm",
-    expressSchemaValidator("/uploadForm"),
+    expressSchemaValidator("/forms/uploadForm"),
     formController.uploadForm
 );
 router.post(
     "/:id",
-    expressSchemaValidator("/createForm"),
+    expressSchemaValidator("/forms/createForm"),
     formController.updateForm
 );
 router.delete("/:id", formController.deleteForm);
