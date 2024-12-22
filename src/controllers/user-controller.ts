@@ -30,14 +30,13 @@ const signupAsAdmin = async (req: Request, res: Response) => {
     await userService.insertAdmin(reqBody);
 
     try {
-        await mailService.sendEmail(
+        mailService.sendEmail(
             reqBody.email,
             "Welcome to Our Platform!",
             mailService.getSignUpGmailNotify()
         );
-        res.status(201).json({message: "User registered successfully!"});
     } catch (error) {
-        res.status(500).json({message: "Failed to send email", error});
+        console.warn("Failed to send email: ", error);
     }
 
     return res.status(StatusCodes.CREATED).json({
