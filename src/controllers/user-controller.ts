@@ -17,6 +17,7 @@ import MissingTokenError from "@/errors/auth/missing-token";
 import ms from "ms";
 import UserNotFoundError from "@/errors/user/user-not-found";
 import WrongPasswordError from "@/errors/user/wrong-password";
+import LastPasswordRequiredError from "@/errors/user/last-password-required";
 
 /**
  * If updated email had already been existed in DB, return conflict status
@@ -168,6 +169,11 @@ const updateAdminInfo = async (req: Request, res: Response) => {
         ) {
             throw new WrongPasswordError("Retype password is not match");
         }
+        if (!reqBody.lastPassword) {
+            throw new LastPasswordRequiredError(
+                "Previous password is required"
+            );
+        }
     }
 
     await userService.updateAdmin(adminId, reqBody);
@@ -292,6 +298,11 @@ const updateStudentInfo = async (req: Request, res: Response) => {
             reqBody.password != reqBody.retypePassword
         ) {
             throw new WrongPasswordError("Retype password is not match");
+        }
+        if (!reqBody.lastPassword) {
+            throw new LastPasswordRequiredError(
+                "Previous password is required"
+            );
         }
     }
 

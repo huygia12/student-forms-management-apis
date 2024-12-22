@@ -8,6 +8,7 @@ const blankCheck = (schema: ZodString = z.string()) =>
     });
 
 const isValidDate = (value: string): boolean => {
+    if (value === "") return true; // equivalent to undefined due to mobile app cannot send undefined date
     const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Matches dd/MM/yyyy format
     if (!regex.test(value)) {
         return false;
@@ -52,6 +53,7 @@ const adminUpdateSchema = z
         username: blankCheck().optional(),
         password: blankCheck(z.string().min(6)).optional(),
         retypePassword: blankCheck(z.string().min(6)).optional(),
+        lastPassword: blankCheck(z.string().min(6)).optional(),
     })
     .strict();
 
@@ -76,6 +78,7 @@ const studentUpdateSchema = z
         username: blankCheck().optional(),
         password: blankCheck(z.string().min(6)).optional(),
         retypePassword: blankCheck(z.string().min(6)).optional(),
+        lastPassword: blankCheck(z.string().min(6)).optional(),
     })
     .strict();
 

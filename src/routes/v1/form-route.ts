@@ -10,7 +10,6 @@ router.get("/:id", formController.getForm);
 router.get("/statistic/count", formController.getNumberOfForms);
 router.post(
     "/statistic/group-by-category",
-    authMiddleware.isAdmin,
     expressSchemaValidator("/forms/statistic/group-by-category"),
     formController.getEachCategoryNumberOfForms
 );

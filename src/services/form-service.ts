@@ -71,6 +71,9 @@ const getFormFullJoins = async (params: {
     limit: number;
     currentPage: number;
 }): Promise<FormFullJoin[]> => {
+    console.debug(
+        "check categories length " + (params.categoryIds === undefined)
+    );
     const startOfDate =
         params.fromDate && new Date(params.fromDate.setHours(0, 0, 0, 0));
     const endOfDate =
@@ -201,6 +204,7 @@ const deleteForm = async (formId: string) => {
 };
 
 const getFormNumberOfEachCategories = async (params: {
+    studentId?: string;
     fromDate?: Date;
     toDate?: Date;
 }): Promise<{categoryId: string; totalForms: number}[]> => {
@@ -212,6 +216,7 @@ const getFormNumberOfEachCategories = async (params: {
     const results = await prisma.personalForm.groupBy({
         by: "categoryId",
         where: {
+            studentId: params.studentId,
             createdAt: {
                 gte: startOfDate,
                 lte: endOfDate,

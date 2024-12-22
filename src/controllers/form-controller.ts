@@ -107,13 +107,19 @@ const getForm = async (req: Request, res: Response) => {
 const getForms = async (req: Request, res: Response) => {
     const studentId = req.query.studentId as string;
     const reqBody = req.body as FormsRetrievement;
-    const fromDate = req.body.fromDate && parseDate(req.body.fromDate);
-    const toDate = req.body.toDate && parseDate(req.body.toDate);
+    const fromDate =
+        typeof req.body.fromDate == "string"
+            ? parseDate(req.body.fromDate)
+            : undefined;
+    const toDate =
+        typeof req.body.toDate == "string"
+            ? parseDate(req.body.toDate)
+            : undefined;
     let categoryIds = req.body.categoryIds as string[] | undefined;
     let status = reqBody.status as FormStatus[] | undefined;
 
-    categoryIds && categoryIds.length === 0 ? undefined : categoryIds;
-    status && status.length === 0 ? undefined : status;
+    categoryIds = categoryIds?.length == 0 ? undefined : categoryIds;
+    status = status?.length == 0 ? undefined : status;
 
     const forms = await formService.getFormFullJoins({
         keySearch: req.body.keySearch,
@@ -155,10 +161,21 @@ const updateFormStatus = async (req: Request, res: Response) => {
 };
 
 const getEachCategoryNumberOfForms = async (req: Request, res: Response) => {
-    const fromDate = req.body.fromDate && parseDate(req.body.fromDate);
-    const toDate = req.body.toDate && parseDate(req.body.toDate);
-
+    const accessToken: string | string[] | undefined =
+        req.headers["authorization"];
+    const {role, userId} = jwtService.decodeToken(
+        accessToken!.replace("Bearer ", "")
+    ) as UserInToken;
+    const fromDate =
+        typeof req.body.fromDate == "string"
+            ? parseDate(req.body.fromDate)
+            : undefined;
+    const toDate =
+        typeof req.body.toDate == "string"
+            ? parseDate(req.body.toDate)
+            : undefined;
     const data = await formService.getFormNumberOfEachCategories({
+        studentId: UserRole.STUDENT === role ? userId : undefined,
         fromDate: fromDate,
         toDate: toDate,
     });
@@ -193,6 +210,7 @@ const parseDate = (dateString: string): Date | undefined => {
     const match = dateString.match(dateRegex);
 
     if (!match) {
+        console.log("go in here");
         return undefined;
     }
 

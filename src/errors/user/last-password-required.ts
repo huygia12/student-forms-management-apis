@@ -1,15 +1,15 @@
 import {StatusCodes} from "http-status-codes";
 import {ResponsableError} from "../custom-error";
 
-class UserIsBanned extends ResponsableError {
-    StatusCode: number = StatusCodes.FORBIDDEN;
+class LastPasswordRequiredError extends ResponsableError {
+    StatusCode: number = StatusCodes.UNPROCESSABLE_ENTITY;
     constructor(public message: string) {
         super(message);
-        Object.setPrototypeOf(this, UserIsBanned.prototype);
+        Object.setPrototypeOf(this, LastPasswordRequiredError.prototype);
     }
     serialize(): {message: string} {
         return {message: this.message};
     }
 }
 
-export default UserIsBanned;
+export default LastPasswordRequiredError;

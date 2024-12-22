@@ -37,13 +37,20 @@ const updateAdmin = async (
                 ResponseMessage.USER_ALREADY_EXISTS
             );
     }
+    if (validPayload.password && validPayload.lastPassword) {
+        const match = checkAdminPasswordMatch(
+            adminId,
+            validPayload.lastPassword
+        );
+        if (!match)
+            throw new WrongPasswordError(ResponseMessage.WRONG_PASSWORD);
+    }
 
     await prisma.admin.update({
         where: {
             adminId: adminId,
         },
         data: {
-            ...validPayload,
             email: validPayload.email,
             username: validPayload.username,
             password:
@@ -51,6 +58,19 @@ const updateAdmin = async (
                 hashSync(validPayload.password, saltOfRound),
         },
     });
+};
+
+const checkAdminPasswordMatch = async (
+    adminId: string,
+    password: string
+): Promise<boolean> => {
+    const adminAccount = await getAdminById(adminId);
+
+    if (!adminAccount)
+        throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
+
+    // Check whether password is valid
+    return compareSync(password, adminAccount.password);
 };
 
 const logoutAsAdmin = async (token: string, userId: string) => {
@@ -115,6 +135,16 @@ const pushAdminRefreshToken = async (refreshToken: string, adminId: string) => {
             },
         },
     });
+};
+
+const getAdminById = async (adminId: string): Promise<Admin | null> => {
+    const user = await prisma.admin.findFirst({
+        where: {
+            adminId: adminId,
+        },
+    });
+
+    return user;
 };
 
 const getAdminByEmail = async (email: string): Promise<Admin | null> => {
@@ -295,6 +325,19 @@ const deleteAdmin = async (adminId: string) => {
 };
 
 //students
+const checkUserPasswordMatch = async (
+    studentId: string,
+    password: string
+): Promise<boolean> => {
+    const adminAccount = await getStudentById(studentId);
+
+    if (!adminAccount)
+        throw new UserNotFoundError(ResponseMessage.USER_NOT_FOUND);
+
+    // Check whether password is valid
+    return compareSync(password, adminAccount.password);
+};
+
 const checkIfStudentRefreshTokenExistInDB = async (
     refreshToken: string,
     adminId: string
@@ -488,6 +531,16 @@ const getStudentByStudentCode = async (
     return student;
 };
 
+const getStudentById = async (studentId: string): Promise<Student | null> => {
+    const user = await prisma.student.findFirst({
+        where: {
+            studentId: studentId,
+        },
+    });
+
+    return user;
+};
+
 const getStudentDTOByStudentCode = async (
     studentCode: string
 ): Promise<StudentDTO | null> => {
@@ -601,13 +654,20 @@ const updateStudent = async (
                 ResponseMessage.USER_ALREADY_EXISTS
             );
     }
+    if (validPayload.password && validPayload.lastPassword) {
+        const match = await checkUserPasswordMatch(
+            studentId,
+            validPayload.lastPassword
+        );
+        if (!match)
+            throw new WrongPasswordError(ResponseMessage.WRONG_PASSWORD);
+    }
 
     await prisma.student.update({
         where: {
             studentId: studentId,
         },
         data: {
-            ...validPayload,
             studentCode: validPayload.studentCode,
             username: validPayload.username,
             password:
