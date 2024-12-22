@@ -2,6 +2,7 @@ import {Request, Response} from "express";
 import {StatusCodes} from "http-status-codes";
 import jwtService from "@/services/jwt-service";
 import userService from "@/services/user-service";
+import mailService from "@/services/mail-service";
 import {
     AdminSignup,
     AdminLogin,
@@ -27,6 +28,17 @@ const signupAsAdmin = async (req: Request, res: Response) => {
     const reqBody = req.body as AdminSignup;
 
     await userService.insertAdmin(reqBody);
+
+    try {
+        await mailService.sendEmail(
+            reqBody.email,
+            "Welcome to Our Platform!",
+            mailService.getSignUpGmailNotify()
+        );
+        res.status(201).json({message: "User registered successfully!"});
+    } catch (error) {
+        res.status(500).json({message: "Failed to send email", error});
+    }
 
     return res.status(StatusCodes.CREATED).json({
         message: ResponseMessage.SUCCESS,
